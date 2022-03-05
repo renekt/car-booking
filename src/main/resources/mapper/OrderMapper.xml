@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.jip.booking.repository.OrderRepository">
+
+    <resultMap id="OrderResultMap" type="com.jip.booking.entity.Order">
+        <id property="id" column="id"/>
+        <result property="carId" column="card_id"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+    </resultMap>
+
+    <resultMap id="carResult" type="com.jip.booking.entity.Car">
+        <id property="id" column="id"/>
+        <result property="model" column="model"/>
+    </resultMap>
+
+
+    <select id="findBookableCars" resultMap="carResult">
+        select tc.*
+        from t_order t
+                 right join t_car tc on t.car_id = tc.id
+        where not exists(select t2.id
+                         from t_order t2
+                         where t2.car_id = tc.id
+                           and t2.status = 1
+                           and ((start_time <![CDATA[<=]]> #{startTime} and end_time <![CDATA[>=]]> #{startTime})
+                             or (start_time <![CDATA[<=]]> #{endTime} and end_time <![CDATA[>=]]> #{endTime})))
+        group by tc.id;
+    </select>
+
+    <select id="findInBookingOrder" resultType="com.jip.booking.entity.Order">
+        select *
+        from t_order
+        where car_id = #{carId}
+          and status = 1
+          and ((start_time <![CDATA[<=]]> #{startTime} and end_time <![CDATA[>=]]> #{startTime})
+            or (start_time <![CDATA[<=]]> #{endTime} and end_time <![CDATA[>=]]> #{endTime}))
+    </select>
+    <select id="findById" resultType="com.jip.booking.entity.Order">
+        select *
+        from t_order
+        where id = #{id}
+    </select>
+
+    <select id="findFreeStartTime" resultType="java.time.LocalDateTime">
+        select max(end_time)
+        from t_order
+        where car_id = #{carId}
+          and status = 1
+    </select>
+
+    <insert id="save">
+        insert into t_order(car_id, status, create_time, update_time, start_time, end_time)
+        values (#{carId}, #{status}, now(), now(), #{startTime}, #{endTime})
+    </insert>
+
+    <update id="updateOrderStatus">
+        update t_order
+        set status      = #{status},
+            update_time = now()
+        where id = #{id}
+    </update>
+</mapper>
