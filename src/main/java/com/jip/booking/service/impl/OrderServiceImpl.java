@@ -10,13 +10,17 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Jip
  */
 @Service
 public class OrderServiceImpl implements IOrderService {
+    private static final Set<Long> LOCKED_KEYS = new HashSet<>();
+
     private final OrderRepository orderRepository;
 
     private final CarRepository carRepository;
@@ -37,25 +41,6 @@ public class OrderServiceImpl implements IOrderService {
         return "success";
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public String createBookingOrder(Long carId, LocalDateTime startTime, LocalDateTime endTime) {
-        Assert.isTrue(startTime.isAfter(LocalDateTime.now()), "Start time must be after current time");
-        Assert.isTrue(startTime.isBefore(endTime), "Start time must be before end time");
-        Assert.notNull(carId, "carId must not be null");
-
-        Car car = carRepository.findById(carId);
-        Assert.isTrue(car != null, "Car not found");
-
-        List<Order> inBookingOrder = orderRepository.findInBookingOrder(carId, startTime, endTime);
-        Assert.isTrue(inBookingOrder.isEmpty(), "Car is already booked");
-
-        Order order = new Order(car.getId(), startTime, endTime);
-        order.setStatus(Order.OrderStatus.IN_BOOKING.getStatus());
-        orderRepository.save(order);
-
-        return "success";
-    }
 
     @Override
     public LocalDateTime getFreeStartTime(Long carId) {
@@ -67,4 +52,47 @@ public class OrderServiceImpl implements IOrderService {
         return orderRepository.findInBookingOrder(carId, startTime, endTime);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String createBookingOrder(Long carId, LocalDateTime startTime, LocalDateTime endTime)  {
+        Assert.isTrue(startTime.isAfter(LocalDateTime.now()), "Start time must be after current time");
+        Assert.isTrue(startTime.isBefore(endTime), "Start time must be before end time");
+        Assert.notNull(carId, "carId must not be null");
+
+        try {
+            // acquire lock
+            lock(carId);
+            Car car = carRepository.findById(carId);
+            Assert.isTrue(car != null, "Car not found");
+
+            List<Order> inBookingOrder = orderRepository.findInBookingOrder(carId, startTime, endTime);
+            Assert.isTrue(inBookingOrder.isEmpty(), "Car is already booked");
+
+            Order order = new Order(car.getId(), startTime, endTime);
+            order.setStatus(Order.OrderStatus.IN_BOOKING.getStatus());
+            orderRepository.save(order);
+        } catch (InterruptedException e){
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
+        } finally{
+            unlock(carId);
+        }
+
+        return "success";
+    }
+
+    private void lock(Long key) throws InterruptedException {
+        synchronized (LOCKED_KEYS) {
+            while (!LOCKED_KEYS.add(key)) {
+                LOCKED_KEYS.wait();
+            }
+        }
+    }
+
+    private void unlock(Long key) {
+        synchronized (LOCKED_KEYS) {
+            LOCKED_KEYS.remove(key);
+            LOCKED_KEYS.notifyAll();
+        }
+    }
 }

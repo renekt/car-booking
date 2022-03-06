@@ -20,7 +20,7 @@ import java.util.List;
  * @author Jip
  */
 @RestController
-@RequestMapping("/booking/api/")
+@RequestMapping("/api/booking/")
 public class TestCaseController {
     private static final String DATETIME_STRING_PATTERN = "yyyy-MM-dd HH:mm:ss";
 
@@ -41,7 +41,7 @@ public class TestCaseController {
         return carService.getBookableCar(start, end);
     }
 
-    @PostMapping("/newBooking")
+    @PostMapping("/new")
     public String newBooking(@RequestBody BookingRequest request) {
         LocalDateTime startTime = LocalDateTime.parse(request.getStartTime(), DateTimeFormatter.ofPattern(DATETIME_STRING_PATTERN));
         LocalDateTime endTime = LocalDateTime.parse(request.getEndTime(), DateTimeFormatter.ofPattern(DATETIME_STRING_PATTERN));
@@ -49,7 +49,7 @@ public class TestCaseController {
 
     }
 
-    @GetMapping("/cancelBooking/{orderId}")
+    @GetMapping("/cancel/{orderId}")
     public String cancelBooking(@PathVariable("orderId") Long orderId) {
         return orderService.cancelBookedOrder(orderId);
     }
