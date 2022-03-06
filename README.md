@@ -61,6 +61,7 @@
    }
     ```
 # API Spec
+> **All API requests need a request header `token` ,default value is `Y29mZmVlCiA=`.**
 1. Create a new booking order:
    1. **POST** `/api/booking/new`
    2. Request body:
