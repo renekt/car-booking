@@ -54,9 +54,9 @@ public class TestCaseController {
 
     }
 
-    @GetMapping("/cancel/{orderId}")
+    @PostMapping("/cancel")
     @ApiOperation(value = "Cancel booking")
-    public String cancelBooking(@PathVariable("orderId") Long orderId) {
+    public String cancelBooking(@RequestParam("orderId") Long orderId) {
         return orderService.cancelBookedOrder(orderId);
     }
 
