@@ -22,8 +22,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @RunWith(SpringRunner.class)
 class CarBookingTest {
+    /**
+     * car is free from this time
+     * means the car is bookable after this time ,and not bookable before this time
+     * initialized before each test case
+     */
     LocalDateTime freeStartTime;
 
+    /**
+     * tmp carId
+     * initialized before each test case
+     */
     Long carId;
 
     @Autowired
