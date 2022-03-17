@@ -2,7 +2,6 @@ package com.jip.booking.service;
 
 import com.jip.booking.entity.Car;
 import com.jip.booking.entity.Order;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -15,6 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThrows;
 
 /**
  * @author Jip
@@ -63,7 +63,7 @@ class CarBookingTest {
         List<Order> afterInBookingOrders = orderService.findInBookingOrders(carId, freeStartTime, endTime);
         assertThat(afterInBookingOrders).isNotEmpty().size().isEqualTo(1);
         // duplicate booking, throw exception
-        Assert.assertThrows(IllegalArgumentException.class, () -> orderService.createBookingOrder(carId, freeStartTime, endTime));
+        assertThrows(IllegalArgumentException.class, () -> orderService.createBookingOrder(carId, freeStartTime, endTime));
     }
 
     @Test
@@ -75,7 +75,7 @@ class CarBookingTest {
         assertThat(orderService.cancelBookedOrder(orderId)).isEqualTo("success");
 
         // duplicate cancel, throw exception
-        Assert.assertThrows(IllegalArgumentException.class, () -> orderService.cancelBookedOrder(orderId));
+        assertThrows(IllegalArgumentException.class, () -> orderService.cancelBookedOrder(orderId));
 
     }
 
@@ -83,14 +83,14 @@ class CarBookingTest {
     void bookingCarBeforeCurrentTime() {
         LocalDateTime startTime = LocalDateTime.now().minusDays(1);
         LocalDateTime endTime = freeStartTime.plusDays(1);
-        Assert.assertThrows(IllegalArgumentException.class, () -> orderService.createBookingOrder(carId, startTime, endTime));
+        assertThrows(IllegalArgumentException.class, () -> orderService.createBookingOrder(carId, startTime, endTime));
     }
 
     @Test
     void endTimeBeforeStartTime() {
         LocalDateTime startTime = freeStartTime.plusDays(2);
         LocalDateTime endTime = freeStartTime.plusDays(1);
-        Assert.assertThrows(IllegalArgumentException.class, () -> orderService.createBookingOrder(carId, startTime, endTime));
+        assertThrows(IllegalArgumentException.class, () -> orderService.createBookingOrder(carId, startTime, endTime));
     }
 
 
